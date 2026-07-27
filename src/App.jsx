@@ -182,8 +182,8 @@ function App() {
                 <div className="info-alert">
                   <Info size={20} className="info-icon" />
                   <p>
-                    이 단말기(브라우저)에 발급된 번호표가 없습니다. 아래 버튼을
-                    눌러 번호표를 뽑아주세요.
+                    단말기에 발급된 번호표가 없습니다. 아래 버튼을 눌러 번호표를
+                    뽑아주세요.
                   </p>
                 </div>
 
