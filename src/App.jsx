@@ -241,8 +241,8 @@ function App() {
             <div className="dispenser-machine">
               <div className="dispenser-top-glow"></div>
               <div className="dispenser-screen">
-                <div className="screen-label">남은 수량</div>
-                <div className="screen-number">{remainingCount}</div>
+                <div className="screen-label">행운의 숫자</div>
+                <div className="screen-number">8</div>
               </div>
               <div className="dispenser-slot">
                 <div className="slot-opening"></div>
@@ -263,12 +263,12 @@ function App() {
                     <div className="zigzag-edge top"></div>
 
                     <div className="paper-header">
-                      <span className="paper-brand">JB BANK</span>
-                      <span className="paper-badge">공식 번호표</span>
+                      <span className="paper-brand">JB BAND</span>
+                      <span className="paper-badge">번호표</span>
                     </div>
 
                     <div className="paper-body">
-                      <div className="paper-title">대기 번호</div>
+                      <div className="paper-title">당첨 번호</div>
                       <div className="paper-number-box">
                         <span className="paper-number">
                           {String(ticketNumber).padStart(3, "0")}
