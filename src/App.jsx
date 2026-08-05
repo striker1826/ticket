@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabaseClient";
 import {
   Ticket,
@@ -7,7 +7,66 @@ import {
   CheckCircle,
   Info,
   AlertTriangle,
+  Sparkles,
+  Scissors,
+  Check,
 } from "lucide-react";
+
+// Web Audio API를 활용한 효과음 재생 함수
+const playTicketSound = () => {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+
+    // 1. 기계 잉크/인쇄 소리 (White Noise Burst + 모터 웅웅 소리)
+    const bufferSize = ctx.sampleRate * 2.0;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const noiseFilter = ctx.createBiquadFilter();
+    noiseFilter.type = "bandpass";
+    noiseFilter.frequency.value = 1200;
+    noiseFilter.Q.value = 3;
+
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.08, ctx.currentTime);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.0);
+
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+    noise.start();
+
+    // 2. 비프음 (완료 알림 띵!)
+    setTimeout(() => {
+      const osc = ctx.createOscillator();
+      const oscGain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(1046.5, ctx.currentTime); // C6
+      osc.frequency.exponentialRampToValueAtTime(
+        1318.51,
+        ctx.currentTime + 0.15,
+      ); // E6
+
+      oscGain.gain.setValueAtTime(0.12, ctx.currentTime);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+
+      osc.connect(oscGain);
+      oscGain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.3);
+    }, 2100);
+  } catch (e) {
+    console.error("Audio play error", e);
+  }
+};
 
 function App() {
   const [deviceId, setDeviceId] = useState("");
@@ -17,11 +76,16 @@ function App() {
   const [assigning, setAssigning] = useState(false);
   const [error, setError] = useState("");
 
+  // Real dispersion states
+  const [dispensing, setDispensing] = useState(false); // 애니메이션 실행 중
+  const [isNewTicket, setIsNewTicket] = useState(false); // 방금 생성된 티켓 여부
+  const [ticketTaken, setTicketTaken] = useState(false); // 번호표 집기 완료 여부
+  const [issueTime, setIssueTime] = useState("");
+
   // Initialize/Retrieve Device ID
   useEffect(() => {
     let id = localStorage.getItem("device_id");
     if (!id) {
-      // Generate a simple unique browser/device ID
       id =
         "device_" +
         Math.random().toString(36).substring(2, 15) +
@@ -41,7 +105,7 @@ function App() {
       setError("");
       const { data, error: fetchErr } = await supabase
         .from("device_tickets")
-        .select("ticket_number")
+        .select("ticket_number, created_at")
         .eq("device_id", id)
         .maybeSingle();
 
@@ -49,6 +113,18 @@ function App() {
 
       if (data) {
         setTicketNumber(data.ticket_number);
+        setTicketTaken(true); // 기존에 뽑았던 티켓은 바로 수령 상태로 표시
+        if (data.created_at) {
+          setIssueTime(
+            new Date(data.created_at).toLocaleTimeString("ko-KR", {
+              hour12: false,
+            }),
+          );
+        } else {
+          setIssueTime(
+            new Date().toLocaleTimeString("ko-KR", { hour12: false }),
+          );
+        }
       }
     } catch (err) {
       console.error("Error fetching ticket:", err);
@@ -74,12 +150,11 @@ function App() {
 
   // Assign a ticket using RPC
   const handleAssignTicket = async () => {
-    if (!deviceId) return;
+    if (!deviceId || assigning || dispensing) return;
     try {
       setAssigning(true);
       setError("");
 
-      // Call the postgres RPC function
       const { data, error: rpcErr } = await supabase.rpc("assign_ticket", {
         client_device_id: deviceId,
       });
@@ -89,8 +164,20 @@ function App() {
       if (data === null || data === undefined) {
         setError("남은 번호표가 없습니다! (100개 모두 소진됨)");
       } else {
+        // 애니메이션 시작
+        setDispensing(true);
+        setIsNewTicket(true);
+        setTicketTaken(false);
         setTicketNumber(data);
+        setIssueTime(new Date().toLocaleTimeString("ko-KR", { hour12: false }));
+        playTicketSound();
+
         await fetchStats();
+
+        // 2.5초 후 출력 연출 완료
+        setTimeout(() => {
+          setDispensing(false);
+        }, 2500);
       }
     } catch (err) {
       console.error("Error assigning ticket:", err);
@@ -100,6 +187,10 @@ function App() {
     } finally {
       setAssigning(false);
     }
+  };
+
+  const handleTakeTicket = () => {
+    setTicketTaken(true);
   };
 
   // Reset ticket (For testing/debugging purposes, optional)
@@ -118,6 +209,8 @@ function App() {
       if (deleteErr) throw deleteErr;
 
       setTicketNumber(null);
+      setIsNewTicket(false);
+      setTicketTaken(false);
       await fetchStats();
     } catch (err) {
       console.error("Error resetting:", err);
@@ -132,7 +225,7 @@ function App() {
       <header className="app-header">
         <div className="logo-area">
           <Ticket className="logo-icon" />
-          <h1>JB</h1>
+          <h1>JB TICKET</h1>
         </div>
       </header>
 
@@ -143,88 +236,157 @@ function App() {
             <p>번호표 상태를 확인하는 중...</p>
           </div>
         ) : (
-          <div className="ticket-section">
-            {ticketNumber !== null ? (
-              /* Ticket Assigned View */
-              <div className="ticket-card glass">
-                <div className="ticket-header">
-                  <span className="badge">VERIFIED TICKET</span>
-                  <span className="status-indicator">
-                    <CheckCircle size={14} /> Assigned
-                  </span>
-                </div>
-                <div className="ticket-body">
-                  <p className="ticket-label">내 번호표</p>
-                  <div className="ticket-number">
-                    {String(ticketNumber).padStart(3, "0")}
-                  </div>
-                  <div className="barcode">
-                    <div className="barcode-line" style={{ width: "4%" }}></div>
-                    <div className="barcode-line" style={{ width: "1%" }}></div>
-                    <div className="barcode-line" style={{ width: "6%" }}></div>
-                    <div className="barcode-line" style={{ width: "2%" }}></div>
-                    <div className="barcode-line" style={{ width: "3%" }}></div>
-                    <div className="barcode-line" style={{ width: "5%" }}></div>
-                    <div className="barcode-line" style={{ width: "1%" }}></div>
-                    <div className="barcode-line" style={{ width: "7%" }}></div>
-                    <div className="barcode-line" style={{ width: "4%" }}></div>
-                  </div>
-                </div>
-                <div className="ticket-footer"></div>
-
-                <button onClick={handleReset} className="btn btn-reset">
-                  번호표 다시 뽑기 (테스트용)
-                </button>
+          <div className="dispenser-wrapper">
+            {/* 번호표 발급기 기계 상단 렌더링 */}
+            <div className="dispenser-machine">
+              <div className="dispenser-top-glow"></div>
+              <div className="dispenser-screen">
+                <div className="screen-label">남은 수량</div>
+                <div className="screen-number">{remainingCount}</div>
               </div>
-            ) : (
-              /* Ticket NOT Assigned View */
-              <div className="action-card glass">
-                <div className="info-alert">
-                  <Info size={20} className="info-icon" />
-                  <p>
-                    단말기에 발급된 번호표가 없습니다. 아래 버튼을 눌러 번호표를
-                    뽑아주세요.
-                  </p>
-                </div>
+              <div className="dispenser-slot">
+                <div className="slot-opening"></div>
+                <div className="slot-light"></div>
+              </div>
+            </div>
 
-                {error && (
-                  <div className="error-alert">
-                    <AlertTriangle size={20} className="error-icon" />
-                    <p>{error}</p>
-                  </div>
-                )}
-
-                <div className="remaining-badge">
-                  남은 번호표:{" "}
-                  <strong className="highlight">{remainingCount}</strong> / 100
-                  개
-                </div>
-
-                <button
-                  onClick={handleAssignTicket}
-                  disabled={assigning || remainingCount === 0}
-                  className="btn btn-primary"
+            <div className="ticket-area">
+              {ticketNumber !== null ? (
+                <div
+                  className={`ticket-wrapper ${isNewTicket && !ticketTaken ? (dispensing ? "dispensing" : "dispensed") : ""} ${ticketTaken ? "taken" : ""}`}
                 >
-                  {assigning ? (
-                    <>
-                      <RefreshCw className="spin-icon" size={18} />
-                      발급 중...
-                    </>
-                  ) : remainingCount === 0 ? (
-                    "번호표 매진"
-                  ) : (
-                    "내 번호표 뽑기"
+                  <div
+                    className="paper-ticket"
+                    onClick={!ticketTaken ? handleTakeTicket : undefined}
+                  >
+                    {/* 영수증 톱니 상단 */}
+                    <div className="zigzag-edge top"></div>
+
+                    <div className="paper-header">
+                      <span className="paper-brand">JB BANK</span>
+                      <span className="paper-badge">공식 번호표</span>
+                    </div>
+
+                    <div className="paper-body">
+                      <div className="paper-title">대기 번호</div>
+                      <div className="paper-number-box">
+                        <span className="paper-number">
+                          {String(ticketNumber).padStart(3, "0")}
+                        </span>
+                      </div>
+                      <p className="paper-info">나에게도 당첨의 행운이!</p>
+                    </div>
+
+                    <div className="paper-divider"></div>
+
+                    <div className="paper-details">
+                      <div className="detail-row">
+                        <span>발급시간</span>
+                        <strong>{issueTime || "12:00:00"}</strong>
+                      </div>
+                    </div>
+
+                    <div className="barcode-wrapper">
+                      <div className="barcode">
+                        <div
+                          className="barcode-line"
+                          style={{ width: "6%" }}
+                        ></div>
+                        <div
+                          className="barcode-line"
+                          style={{ width: "2%" }}
+                        ></div>
+                        <div
+                          className="barcode-line"
+                          style={{ width: "8%" }}
+                        ></div>
+                        <div
+                          className="barcode-line"
+                          style={{ width: "3%" }}
+                        ></div>
+                        <div
+                          className="barcode-line"
+                          style={{ width: "4%" }}
+                        ></div>
+                        <div
+                          className="barcode-line"
+                          style={{ width: "10%" }}
+                        ></div>
+                        <div
+                          className="barcode-line"
+                          style={{ width: "2%" }}
+                        ></div>
+                        <div
+                          className="barcode-line"
+                          style={{ width: "7%" }}
+                        ></div>
+                        <div
+                          className="barcode-line"
+                          style={{ width: "5%" }}
+                        ></div>
+                        <div
+                          className="barcode-line"
+                          style={{ width: "3%" }}
+                        ></div>
+                        <div
+                          className="barcode-line"
+                          style={{ width: "8%" }}
+                        ></div>
+                      </div>
+                      <div className="barcode-num">
+                        TICK-{String(ticketNumber).padStart(5, "0")}
+                      </div>
+                    </div>
+
+                    {/* 영수증 톱니 하단 */}
+                    <div className="zigzag-edge bottom"></div>
+
+                    {!ticketTaken && !dispensing && (
+                      <div className="tear-prompt">
+                        <Scissors className="scissors-icon" size={16} />
+                        <span>클릭하여 번호표 뽑기</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                /* Ticket NOT Assigned View */
+                <div className="action-card glass">
+                  {error && (
+                    <div className="error-alert">
+                      <AlertTriangle size={20} className="error-icon" />
+                      <p>{error}</p>
+                    </div>
                   )}
-                </button>
-              </div>
-            )}
+
+                  <button
+                    onClick={handleAssignTicket}
+                    disabled={assigning || dispensing || remainingCount === 0}
+                    className="btn btn-primary btn-dispense"
+                  >
+                    {assigning || dispensing ? (
+                      <>
+                        <RefreshCw className="spin-icon" size={20} />
+                        번호표 인쇄 중...
+                      </>
+                    ) : remainingCount === 0 ? (
+                      "오늘 번호표 마감"
+                    ) : (
+                      <>
+                        <Sparkles size={20} />내 번호표 뽑기
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </main>
 
       <footer className="app-footer">
         <Smartphone size={14} />
-        <span>기기당 하나의 번호표만 뽑을 수 있습니다.</span>
+        <span>1인당 기기 1대의 번호표만 유지됩니다.</span>
       </footer>
     </div>
   );

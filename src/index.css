@@ -1,7 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
 :root {
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family:
+    "Plus Jakarta Sans",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -17,7 +25,7 @@
   --glass-glow: rgba(129, 140, 248, 0.1);
   --success-color: #34d399;
   --error-color: #f87171;
-  
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -59,7 +67,7 @@ body {
 /* Header */
 .app-header {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 1rem;
 }
 
 .logo-area {
@@ -130,7 +138,7 @@ body {
 }
 
 .ticket-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -245,7 +253,8 @@ body {
   gap: 1.5rem;
 }
 
-.info-alert, .error-alert {
+.info-alert,
+.error-alert {
   display: flex;
   gap: 0.75rem;
   padding: 1rem;
@@ -305,7 +314,11 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--accent-color) 0%,
+    var(--accent-hover) 100%
+  );
   color: #ffffff;
   box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
 }
@@ -353,7 +366,406 @@ body {
   text-align: center;
 }
 
+/* Dispenser Machine Container */
+.dispenser-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Machine Top Housing */
+.dispenser-machine {
+  position: relative;
+  width: 100%;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px 20px 10px 10px;
+  padding: 1.25rem;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.dispenser-top-glow {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--accent-color),
+    transparent
+  );
+  box-shadow: 0 0 12px var(--accent-color);
+}
+
+.dispenser-screen {
+  background: #090d16;
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  box-shadow:
+    inset 0 0 10px rgba(0, 0, 0, 0.8),
+    0 0 10px rgba(129, 140, 248, 0.15);
+  border-radius: 12px;
+  padding: 0.5rem 1.5rem;
+  text-align: center;
+  min-width: 160px;
+}
+
+.screen-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.screen-number {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #38bdf8;
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+}
+
+/* Machine Ticket Slot */
+.dispenser-slot {
+  position: relative;
+  width: 85%;
+  height: 14px;
+  background: #020617;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.9);
+  overflow: hidden;
+}
+
+.slot-opening {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 80%
+  );
+}
+
+.slot-light {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(129, 140, 248, 0.4);
+}
+
+/* Ticket Output Area */
+.ticket-area {
+  position: relative;
+  width: 100%;
+  margin-top: -6px; /* slots seamlessly into machine */
+  z-index: 5;
+  perspective: 1000px;
+}
+
+/* Ticket Wrapper & Animation states */
+.ticket-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.ticket-wrapper.dispensing .paper-ticket {
+  animation: printOut 2.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.ticket-wrapper.dispensed .paper-ticket {
+  transform: translateY(0);
+}
+
+.ticket-wrapper.taken .paper-ticket {
+  animation: tearOff 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Real Thermal Paper Ticket Styling */
+.paper-ticket {
+  position: relative;
+  width: 88%;
+  background: #f8fafc;
+  color: #0f172a;
+  padding: 1.5rem 1.25rem 1.25rem;
+  box-shadow:
+    0 15px 35px rgba(0, 0, 0, 0.4),
+    0 3px 10px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transform-origin: top center;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+  user-select: none;
+}
+
+.paper-ticket:hover {
+  transform: translateY(4px) rotate(-0.5deg);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.5),
+    0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Receipt Sawtooth Edges */
+.zigzag-edge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background-size: 16px 16px;
+}
+
+.zigzag-edge.top {
+  top: -8px;
+  background-image:
+    linear-gradient(135deg, transparent 50%, #f8fafc 50%),
+    linear-gradient(225deg, transparent 50%, #f8fafc 50%);
+  background-position:
+    top left,
+    top left;
+  background-repeat: repeat-x;
+  background-size: 12px 12px;
+}
+
+.zigzag-edge.bottom {
+  bottom: -8px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #f8fafc 50%),
+    linear-gradient(315deg, transparent 50%, #f8fafc 50%);
+  background-position:
+    bottom left,
+    bottom left;
+  background-repeat: repeat-x;
+  background-size: 12px 12px;
+}
+
+/* Paper Content Elements */
+.paper-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #0f172a;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.paper-brand {
+  font-weight: 900;
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+}
+
+.paper-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: #e2e8f0;
+  color: #334155;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+}
+
+.paper-body {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.paper-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.1em;
+}
+
+.paper-number-box {
+  margin: 0.4rem 0;
+}
+
+.paper-number {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 3.8rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #020617;
+  letter-spacing: -0.03em;
+}
+
+.paper-info {
+  font-size: 0.75rem;
+  color: #475569;
+  line-height: 1.3;
+}
+
+.paper-divider {
+  border-top: 1px dashed #94a3b8;
+  margin: 1rem 0;
+}
+
+.paper-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  color: #334155;
+  margin-bottom: 1rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.device-id-text {
+  font-family: monospace;
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+/* Barcode */
+.barcode-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.barcode {
+  display: flex;
+  height: 36px;
+  width: 100%;
+  justify-content: center;
+  align-items: stretch;
+  gap: 2px;
+}
+
+.barcode-line {
+  background-color: #0f172a;
+}
+
+.barcode-num {
+  font-family: monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: #64748b;
+}
+
+/* Click to tear prompt overlay */
+.tear-prompt {
+  position: absolute;
+  bottom: -35px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #3b82f6;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.4rem 0.9rem;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  animation: bouncePrompt 1.5s infinite;
+  z-index: 20;
+}
+
+.scissors-icon {
+  animation: wiggle 1s infinite alternate;
+}
+
+/* Post-taken actions */
+.ticket-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 3rem;
+  width: 100%;
+}
+
+.verified-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #34d399;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: rgba(52, 211, 153, 0.1);
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(52, 211, 153, 0.2);
+}
+
+.btn-dispense {
+  margin-top: 0.5rem;
+  font-size: 1.1rem;
+  padding: 1.1rem 1.5rem;
+}
+
 /* Animations */
+@keyframes printOut {
+  0% {
+    transform: translateY(-85%) scaleY(0.1);
+    opacity: 0.5;
+  }
+  60% {
+    transform: translateY(-20%) scaleY(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes tearOff {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  40% {
+    transform: translateY(12px) rotate(4deg) scale(1.02);
+  }
+  100% {
+    transform: translateY(25px) rotate(0deg) scale(1);
+  }
+}
+
+@keyframes bouncePrompt {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(6px);
+  }
+}
+
+@keyframes wiggle {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(-25deg);
+  }
+}
+
 @keyframes spin {
   from {
     transform: rotate(0deg);
@@ -368,11 +780,12 @@ body {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
-    opacity: .5;
+    opacity: 0.5;
   }
 }
 
