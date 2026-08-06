@@ -14,29 +14,9 @@ import {
   Trash2,
 } from "lucide-react";
 
-// 실제 고품질 음향 샘플 프리로드 및 반응속도 0ms 클론 오디오 재생 엔진
-const audioPool = {
-  tick: new Audio("/sounds/tick.mp3"),
-  stop: new Audio("/sounds/stop.mp3"),
-  fanfare: new Audio("/sounds/fanfare.mp3"),
-};
-
-Object.values(audioPool).forEach((audio) => {
-  audio.preload = "auto";
-});
-
+// 추첨 화면 효과음 비활성화
 const playAudioEffect = (type) => {
-  try {
-    const sample = audioPool[type];
-    if (!sample) return;
-
-    // 빠른 회전에도 사운드가 씹히지 않도록 노드 클론 생성 후 즉시 재생
-    const soundNode = sample.cloneNode();
-    soundNode.volume = type === "tick" ? 0.4 : type === "stop" ? 0.65 : 0.85;
-    soundNode.play().catch(() => {});
-  } catch (e) {
-    console.error("Audio playback error", e);
-  }
+  return;
 };
 
 export default function DrawPage() {
@@ -49,7 +29,7 @@ export default function DrawPage() {
   const [winnersList, setWinnersList] = useState([]);
   const [preventDuplicate, setPreventDuplicate] = useState(true);
   const [prizeTitle, setPrizeTitle] = useState("1등");
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(false);
   const [error, setError] = useState("");
 
   const intervalRef = useRef(null);
