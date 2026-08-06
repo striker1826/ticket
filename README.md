@@ -12,7 +12,7 @@
 create table public.device_tickets (
   id uuid default gen_random_uuid() primary key,
   device_id text not null unique,
-  ticket_number integer not null unique check (ticket_number >= 1 and ticket_number <= 100),
+  ticket_number integer not null unique check (ticket_number >= 1),
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -22,7 +22,7 @@ alter table public.device_tickets enable row level security;
 -- 3. 익명 사용자(Public) 조회 정책 생성 (조회 권한만 부여)
 create policy "Allow read access to anyone" on public.device_tickets for select using (true);
 
--- 4. 원자적(Atomic) 무작위 번호 할당 및 중복 방지를 위한 Postgres RPC 함수 생성
+-- 4. 원자적(Atomic) 순차 번호 할당 및 중복 방지를 위한 Postgres RPC 함수 생성
 create or replace function assign_ticket(client_device_id text)
 returns integer
 language plpgsql
@@ -40,24 +40,18 @@ begin
     return assigned_number;
   end if;
   
-  -- 1~100 사이의 사용 가능한 번호 중 무작위로 1개를 선택하여 삽입
-  with available_tickets as (
-    select n 
-    from generate_series(1, 100) n
-    left join public.device_tickets dt on dt.ticket_number = n
-    where dt.ticket_number is null
-    order by random()
-    limit 1
-  )
+  -- 1부터 순서대로 번호 부여 (가장 마지막 발급된 번호 + 1)
+  select coalesce(max(ticket_number), 0) + 1 into assigned_number
+  from public.device_tickets;
+
   insert into public.device_tickets (device_id, ticket_number)
-  select client_device_id, n
-  from available_tickets
+  values (client_device_id, assigned_number)
   returning ticket_number into assigned_number;
   
   return assigned_number;
 exception
   when unique_violation then
-    -- 동시 트랜잭션으로 인한 충돌 발생 시 재시도 (재귀 호출)
+    -- 동시 트랜잭션 충돌 시 재시도 (재귀 호출)
     return assign_ticket(client_device_id);
 end;
 $$;
