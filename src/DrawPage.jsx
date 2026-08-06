@@ -133,12 +133,13 @@ export default function DrawPage() {
       setDisplayDigits([String(activeValues[0]), String(activeValues[1])]);
     };
 
-    // 자릿수(reelIdx)별 독립 릴 회전/개별 감속 함수
+    // 자릿수(reelIdx)별 독립 릴 회전/순차 감속 제어 함수
     const animateSingleReel = (
       reelIdx,
       targetVal,
       fastDurationMs,
       slowDelaysMs,
+      shouldWaitSignal,
       onComplete,
     ) => {
       const startTime = Date.now();
@@ -151,8 +152,12 @@ export default function DrawPage() {
         const elapsed = Date.now() - startTime;
         const currentVal = activeValues[reelIdx];
 
-        // fastDurationMs 경과 및 현 숫자가 감속 출발점(slowStartVal)에 도착하면 감속 모드로 전환
-        if (elapsed >= fastDurationMs && currentVal === slowStartVal) {
+        // 대기 조건(shouldWaitSignal)이 해제되고 fastDurationMs 경과 및 slowStartVal 도착 시 감속 진입
+        if (
+          !shouldWaitSignal() &&
+          elapsed >= fastDurationMs &&
+          currentVal === slowStartVal
+        ) {
           runSlow(0);
         } else {
           activeValues[reelIdx] = (currentVal + 1) % 10;
@@ -182,20 +187,27 @@ export default function DrawPage() {
       runFast();
     };
 
-    // 1. 가장 먼저 멈출 1의 자리(index 1): 2.5초 고속 회전 후 약 3.8초 동안 길고 부드럽게 감속하며 멈춤
+    let reel1Locked = false;
+
+    // 1. 마지막 자릿수 (일의 자리, index 1): 2.5초 고속 회전 후 감속하여 먼저 완전 멈춤
     animateSingleReel(
       1,
       targetValues[1],
       2500,
       [50, 80, 120, 170, 230, 300, 380, 470, 570, 680, 800],
+      () => false,
+      () => {
+        reel1Locked = true; // 마지막 자릿수 완전 멈춤 완료!
+      },
     );
 
-    // 2. 마지막으로 멈출 10의 자리(index 0): 5.5초 고속 회전 후 약 5.0초 동안 묵직하고 서서히 감속하며 멈춤
+    // 2. 앞의 자릿수 (십의 자리, index 0): 마지막 자릿수가 완전히 멈출 때까지(!reel1Locked) 계속 회전하다가 멈추면 감속 시작!
     animateSingleReel(
       0,
       targetValues[0],
-      5500,
+      0,
       [55, 90, 135, 190, 255, 330, 420, 520, 630, 750, 880, 1020],
+      () => !reel1Locked,
       () => {
         // 모든 자릿수 고정 완료 (최종 당첨 처리)
         setDisplayDigits(targetArr);
