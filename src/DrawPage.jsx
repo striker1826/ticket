@@ -187,7 +187,7 @@ export default function DrawPage() {
       runFast();
     };
 
-    let reel1Locked = false;
+    let reel0CanDecelerate = false;
 
     // 1. 마지막 자릿수 (일의 자리, index 1): 2.5초 고속 회전 후 감속하여 먼저 완전 멈춤
     animateSingleReel(
@@ -197,17 +197,20 @@ export default function DrawPage() {
       [50, 80, 120, 170, 230, 300, 380, 470, 570, 680, 800],
       () => false,
       () => {
-        reel1Locked = true; // 마지막 자릿수 완전 멈춤 완료!
+        // 마지막 자릿수 완전 멈춤 후 정확히 1.5초(1500ms) 뒤 첫 번째 자릿수 감속 허용!
+        setTimeout(() => {
+          reel0CanDecelerate = true;
+        }, 1500);
       },
     );
 
-    // 2. 앞의 자릿수 (십의 자리, index 0): 마지막 자릿수가 완전히 멈출 때까지(!reel1Locked) 계속 회전하다가 멈추면 감속 시작!
+    // 2. 첫 번째 자릿수 (십의 자리, index 0): 1.5초 대기(!reel0CanDecelerate) 동안 계속 고속 회전하다가 1.5초 후 감속 시작!
     animateSingleReel(
       0,
       targetValues[0],
       0,
       [55, 90, 135, 190, 255, 330, 420, 520, 630, 750, 880, 1020],
-      () => !reel1Locked,
+      () => !reel0CanDecelerate,
       () => {
         // 모든 자릿수 고정 완료 (최종 당첨 처리)
         setDisplayDigits(targetArr);
