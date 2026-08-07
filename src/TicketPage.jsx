@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabaseClient";
-import { RefreshCw, AlertTriangle, Sparkles, Scissors } from "lucide-react";
+import { RefreshCw, AlertTriangle, Sparkles, Scissors, Music } from "lucide-react";
 
 // Web Audio API를 활용한 효과음 재생 함수 (비활성화)
 const playTicketSound = () => {
@@ -20,6 +20,7 @@ export default function TicketPage() {
   const [isNewTicket, setIsNewTicket] = useState(false); // 방금 생성된 티켓 여부
   const [ticketTaken, setTicketTaken] = useState(false); // 번호표 집기 완료 여부
   const [issueTime, setIssueTime] = useState("");
+  const [showSetlist, setShowSetlist] = useState(false); // 곡 리스트 보기 토글
 
   // Initialize/Retrieve Device ID
   useEffect(() => {
@@ -252,6 +253,51 @@ export default function TicketPage() {
                     </div>
                   )}
                 </div>
+
+                {/* 공연 곡 리스트 토글 및 목록 영역 (위로 펼쳐짐) */}
+                {ticketTaken && (
+                  <div className="setlist-toggle-container">
+                    {showSetlist && (
+                      <div className="setlist-card-wrapper animate-fade-in-up">
+                        <div className="setlist-section">
+                          <div className="setlist-header-badge">1부</div>
+                          <ol className="setlist-song-list">
+                            <li><span className="song-num">1</span> <span className="song-title">sk8er</span></li>
+                            <li><span className="song-num">2</span> <span className="song-title">입춘</span></li>
+                            <li><span className="song-num">3</span> <span className="song-title">새벽별</span></li>
+                            <li><span className="song-num">4</span> <span className="song-title">스퀘어</span></li>
+                            <li><span className="song-num">5</span> <span className="song-title">Material</span></li>
+                            <li><span className="song-num">6</span> <span className="song-title">Stand up</span></li>
+                          </ol>
+                        </div>
+
+                        <div className="setlist-divider"></div>
+
+                        <div className="setlist-section">
+                          <div className="setlist-header-badge stage-2">2부</div>
+                          <ol className="setlist-song-list">
+                            <li><span className="song-num">7</span> <span className="song-title">back in time</span></li>
+                            <li><span className="song-num">8</span> <span className="song-title">단발머리</span></li>
+                            <li><span className="song-num">9</span> <span className="song-title">블루밍</span></li>
+                            <li><span className="song-num">10</span> <span className="song-title">disco</span></li>
+                            <li><span className="song-num">11</span> <span className="song-title">파도</span></li>
+                            <li><span className="song-num">12</span> <span className="song-title">어쩌다마주친그대</span></li>
+                            <li><span className="song-num">13</span> <span className="song-title">what's up</span></li>
+                          </ol>
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => setShowSetlist(!showSetlist)}
+                      className="btn-setlist-toggle"
+                    >
+                      <Music size={16} />
+                      <span>{showSetlist ? "공연 곡 리스트 닫기 ▼" : "공연 곡 리스트 보기 ▲"}</span>
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               /* Ticket NOT Assigned View */
