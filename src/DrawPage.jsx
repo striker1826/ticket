@@ -117,9 +117,9 @@ export default function DrawPage() {
     setWinner(null);
     setLockedDigits([false, false]);
 
-    // 2. Select final winning number in advance (2자리 수 00 ~ 99)
-    const randomIndex = Math.floor(Math.random() * availablePool.length);
-    const winningNum = availablePool[randomIndex];
+    // 2. Select final winning number sequentially starting from 1
+    const sortedPool = [...availablePool].sort((a, b) => Number(a) - Number(b));
+    const winningNum = sortedPool[0];
     const targetArr = String(winningNum).padStart(2, "0").split(""); // 예: ['4', '2']
     const targetValues = [
       parseInt(targetArr[0], 10),
