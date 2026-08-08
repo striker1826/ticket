@@ -286,7 +286,7 @@ export default function TicketPage() {
                             </li>
                             <li>
                               <span className="song-num">5</span>{" "}
-                              <span className="song-title">Material</span>
+                              <span className="song-title">Material girl</span>
                             </li>
                             <li>
                               <span className="song-num">6</span>{" "}
@@ -316,7 +316,7 @@ export default function TicketPage() {
                             </li>
                             <li>
                               <span className="song-num">10</span>{" "}
-                              <span className="song-title">disco</span>
+                              <span className="song-title">Disco yes</span>
                             </li>
                             <li>
                               <span className="song-num">11</span>{" "}
