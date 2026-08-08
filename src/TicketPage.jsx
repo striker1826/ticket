@@ -282,7 +282,7 @@ export default function TicketPage() {
                             </li>
                             <li>
                               <span className="song-num">4</span>{" "}
-                              <span className="song-title">스퀘어</span>
+                              <span className="song-title">square</span>
                             </li>
                             <li>
                               <span className="song-num">5</span>{" "}
@@ -304,7 +304,7 @@ export default function TicketPage() {
                           <ol className="setlist-song-list">
                             <li>
                               <span className="song-num">7</span>{" "}
-                              <span className="song-title">back in time</span>
+                              <span className="song-title">Back in time</span>
                             </li>
                             <li>
                               <span className="song-num">8</span>{" "}
