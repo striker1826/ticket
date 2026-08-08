@@ -6,6 +6,7 @@ import {
 } from "react-router-dom";
 import TicketPage from "./TicketPage";
 import DrawPage from "./DrawPage";
+import QRPage from "./QRPage";
 import { Music, Disc, Ticket } from "lucide-react";
 
 function AppContent() {
@@ -15,6 +16,7 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<TicketPage />} />
           <Route path="/draw" element={<DrawPage />} />
+          <Route path="/qr" element={<QRPage />} />
         </Routes>
       </main>
     </div>
