@@ -270,7 +270,7 @@ export default function TicketPage() {
                           <ol className="setlist-song-list">
                             <li>
                               <span className="song-num">1</span>{" "}
-                              <span className="song-title">sk8er</span>
+                              <span className="song-title">Sk8er Boi</span>
                             </li>
                             <li>
                               <span className="song-num">2</span>{" "}
